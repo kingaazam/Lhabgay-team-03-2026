@@ -17,11 +17,13 @@ func main() {
 	router := mux.NewRouter()
 	routes.RegisterRoutes(router)
 
-	// 1. Serve the explicit Login.html page when users visit the root URL "/"
+	// 1. Look for Login.html in the current project directory context
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "../../Login.html")
+		http.ServeFile(w, r, "Login.html") // <-- Removed the "../../"
 	}).Methods(http.MethodGet)
 
+	// 2. Serve static asset files from the current folder context
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(".")))) // <-- Changed to "."
 	// 2. Safely serve all other static asset files (HTML, CSS, JS, Images) from the parent directory
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../../"))))
 
