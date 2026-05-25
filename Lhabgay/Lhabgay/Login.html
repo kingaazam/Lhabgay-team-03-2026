@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Lhabgay Login - Lhabgay E-Library</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      /* Color Variables */
+      :root {
+        --bg-color: #ffffff;
+        --text-color: #1a1a2e;
+        --text-light: #666666;
+        --header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --card-bg: #ffffff;
+        --input-bg: #ffffff;
+        --input-border: #e9ecef;
+        --btn-outline-bg: #ffffff;
+        --btn-outline-border: #d1d5db;
+        --divider-color: #cccccc;
+        --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        --footer-text: #999999;
+      }
+
+      /* Dark Mode Colors */
+      .dark-mode {
+        --bg-color: #0f0f1a;
+        --text-color: #ffffff;
+        --text-light: #aaaaaa;
+        --header-bg: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        --card-bg: #1a1a2e;
+        --input-bg: #2a2a3e;
+        --input-border: #3a3a4e;
+        --btn-outline-bg: #2a2a3e;
+        --btn-outline-border: #4a4a5e;
+        --divider-color: #444444;
+        --shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        --footer-text: #666666;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease,
+          border-color 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        padding: 20px;
+      }
+
+      /* Dark mode body background */
+      .dark-mode body {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      }
+
+      /* Main Container */
+      .login-wrapper {
+        width: 100%;
+        max-width: 500px;
+        margin: 20px auto;
+      }
+
+      /* Back Button */
+      .back-button {
+        margin-bottom: 20px;
+      }
+
+      .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 50px;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+      }
+
+      .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateX(-3px);
+      }
+
+      /* Login Card */
+      .login-container {
+        background-color: var(--card-bg);
+        border-radius: 30px;
+        padding: 40px 30px;
+        box-shadow: var(--shadow);
+        transition: all 0.3s ease;
+      }
+
+      /* Header Banner */
+      .top-banner {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .top-banner h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        letter-spacing: 2px;
+      }
+
+      .dark-mode .top-banner h1 {
+        background: linear-gradient(135deg, #a8c0ff 0%, #3f2b96 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+      }
+
+      .welcome-text {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .welcome-text h2 {
+        font-size: 1.8rem;
+        color: var(--text-color);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .welcome-text p {
+        color: var(--text-light);
+        font-size: 0.9rem;
+      }
+
+      /* Social Actions */
+      .social-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 25px;
+      }
+
+      .btn-outline {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        width: 100%;
+        padding: 14px;
+        background: var(--btn-outline-bg);
+        border: 2px solid var(--btn-outline-border);
+        border-radius: 50px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-color);
+        transition: all 0.3s;
+      }
+
+      .btn-outline img {
+        width: 20px;
+        height: 20px;
+      }
+
+      .btn-outline:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        border-color: #667eea;
+      }
+
+      /* Divider */
+      .divider {
+        text-align: center;
+        margin: 25px 0;
+        position: relative;
+        color: var(--divider-color);
+        font-size: 0.85rem;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 45%;
+        height: 1px;
+        background: var(--divider-color);
+      }
+
+      .divider::before {
+        left: 0;
+      }
+
+      .divider::after {
+        right: 0;
+      }
+
+      /* Email Section */
+      .email-section {
+        margin-bottom: 25px;
+      }
+
+      .email-section h3 {
+        font-size: 1rem;
+        color: var(--text-color);
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .email-section p {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        margin-bottom: 20px;
+      }
+
+      /* Input Fields */
+      .input-group {
+        margin-bottom: 15px;
+      }
+
+      .input-group input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 2px solid var(--input-border);
+        border-radius: 50px;
+        font-size: 0.95rem;
+        background-color: var(--input-bg);
+        color: var(--text-color);
+        transition: all 0.3s;
+      }
+
+      .input-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .input-group input::placeholder {
+        color: var(--text-light);
+        opacity: 0.6;
+      }
+
+      /* Password Toggle */
+      .password-wrapper {
+        position: relative;
+      }
+
+      .password-wrapper input {
+        padding-right: 45px;
+      }
+
+      .toggle-password {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: var(--text-light);
+        background: none;
+        border: none;
+        font-size: 1rem;
+      }
+
+      /* Buttons */
+      .btn-solid {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .btn-solid:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-solid:active {
+        transform: translateY(0);
+      }
+
+      /* Guest Link */
+      .guest-link {
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .guest-link button {
+        background: transparent;
+        border: 2px solid var(--btn-outline-border);
+        color: var(--text-color);
+      }
+
+      .guest-link button:hover {
+        background: rgba(102, 126, 234, 0.1);
+        border-color: #667eea;
+      }
+
+      /* Theme Toggle */
+      .theme-toggle {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--divider-color);
+        text-align: center;
+      }
+
+      .toggle-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: var(--text-light);
+      }
+
+      .toggle-label i {
+        font-size: 1rem;
+      }
+
+      #switch {
+        height: 0;
+        width: 0;
+        visibility: hidden;
+        position: absolute;
+      }
+
+      .toggle-switch {
+        cursor: pointer;
+        width: 52px;
+        height: 28px;
+        background: #333;
+        display: block;
+        border-radius: 100px;
+        position: relative;
+      }
+
+      .toggle-switch:after {
+        content: "🌙";
+        position: absolute;
+        top: 3px;
+        left: 4px;
+        width: 22px;
+        height: 22px;
+        background: white;
+        border-radius: 90px;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      #switch:checked + .toggle-switch {
+        background: #43b54d;
+      }
+
+      #switch:checked + .toggle-switch:after {
+        content: "☀️";
+        left: calc(100% - 4px);
+        transform: translateX(-100%);
+      }
+
+      /* Footer Links */
+      .footer-links {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 0.8rem;
+      }
+
+      .footer-links a {
+        color: var(--text-light);
+        text-decoration: none;
+        margin: 0 10px;
+        transition: color 0.3s;
+      }
+
+      .footer-links a:hover {
+        color: #667eea;
+      }
+
+      /* Error Message */
+      .error-message {
+        background: #fee2e2;
+        color: #dc2626;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        margin-bottom: 15px;
+        display: none;
+      }
+
+      .dark-mode .error-message {
+        background: #2a1a1a;
+      }
+
+      /* Toast Notification */
+      .toast-message {
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-size: 14px;
+        z-index: 10000;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+      }
+
+      /* Responsive */
+      @media (max-width: 550px) {
+        .login-container {
+          padding: 30px 20px;
+        }
+
+        .welcome-text h2 {
+          font-size: 1.5rem;
+        }
+
+        .btn-outline {
+          padding: 12px;
+          font-size: 0.85rem;
+        }
+
+        .btn-solid {
+          padding: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="login-wrapper">
+      <div class="back-button">
+        <button
+          class="back-btn"
+          onclick="window.location.href = 'navigation.html'"
+        >
+          <i class="fas fa-arrow-left"></i> Back to Navigation
+        </button>
+      </div>
+
+      <div class="login-container">
+        <div class="top-banner">
+          <h1>LHABGAY</h1>
+        </div>
+
+        <div class="welcome-text">
+          <h2>Welcome Back!</h2>
+          <p>Sign in to continue your reading journey</p>
+        </div>
+        <div class="email-section">
+          <div id="errorMsg" class="error-message"></div>
+
+          <div class="input-group">
+            <input type="email" id="email" placeholder="Email Address *" />
+          </div>
+
+          <div class="input-group password-wrapper">
+            <input
+              type="password"
+              id="password"
+              placeholder="Password *"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              onclick="togglePassword()"
+            >
+              <i class="fas fa-eye"></i>
+            </button>
+          </div>
+
+          <button class="btn-solid" onclick="login()">
+            <i class="fas fa-sign-in-alt"></i> Sign In
+          </button>
+
+          <div class="footer-links" style="margin-top: 15px">
+            <a
+              href="#"
+              onclick="showToast('Password reset link sent to your email!')"
+              >Forgot Password?</a
+            >
+            <a href="UserSignUp.html"> Create Account </a>
+          </div>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <div class="guest-link">
+          <button
+            class="btn-solid"
+            style="
+              background: transparent;
+              border: 2px solid var(--btn-outline-border);
+              color: var(--text-color);
+            "
+            onclick="continueAsGuest()"
+          >
+            <i class="fas fa-user-friends"></i> Continue as Guest
+          </button>
+        </div>
+
+        <div class="theme-toggle">
+          <label class="toggle-label">
+            <i class="fas fa-moon"></i>
+            <input type="checkbox" id="switch" />
+            <span class="toggle-switch"></span>
+            <i class="fas fa-sun"></i>
+          </label>
+        </div>
+
+        <div class="footer-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Service</a>
+          <a href="contact.html">Help</a>
+        </div>
+      </div>
+    </div>
+
+    <div id="toastMsg" class="toast-message"></div>
+
+    <script>
+      function showToast(message, isError = false) {
+        const toast = document.getElementById("toastMsg");
+        toast.textContent = message;
+        toast.style.backgroundColor = isError ? "#dc2626" : "#333";
+        toast.style.opacity = "1";
+        setTimeout(() => {
+          toast.style.opacity = "0";
+        }, 3000);
+      }
+
+      // Check for saved user preference on page load
+      const checkbox = document.getElementById("switch");
+      if (localStorage.getItem("theme") === "dark") {
+        document.body.classList.add("dark-mode");
+        checkbox.checked = true;
+      }
+
+      function showError(message) {
+        const errorDiv = document.getElementById("errorMsg");
+        errorDiv.textContent = message;
+        errorDiv.style.display = "block";
+        setTimeout(() => {
+          errorDiv.style.display = "none";
+        }, 3000);
+      }
+
+      function togglePassword() {
+        const passwordInput = document.getElementById("password");
+        const toggleBtn = document.querySelector(".toggle-password i");
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          toggleBtn.classList.remove("fa-eye");
+          toggleBtn.classList.add("fa-eye-slash");
+        } else {
+          passwordInput.type = "password";
+          toggleBtn.classList.remove("fa-eye-slash");
+          toggleBtn.classList.add("fa-eye");
+        }
+      }
+
+      function validateEmail(email) {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+      }
+
+      function continueAsGuest() {
+        showToast("🎉 Continuing as guest...");
+        localStorage.setItem("isLoggedIn", "false");
+        localStorage.setItem("isGuest", "true");
+        localStorage.setItem("userRole", "guest");
+
+        setTimeout(() => {
+          window.location.href = "home.html";
+        }, 1000);
+      }
+
+      // Updated login logic targeting 'admin.html' instead of 'AdminDashboard.html'
+      async function login() {
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        if (!email) {
+          showError("Please enter your email address");
+          return;
+        }
+
+        if (!validateEmail(email)) {
+          showError("Please enter a valid email address");
+          return;
+        }
+
+        if (!password) {
+          showError("Please enter your password");
+          return;
+        }
+
+        try {
+          const response = await fetch("/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            showToast(data.error || "Login failed", true);
+            return;
+          }
+
+          const isAdmin = data.role === "admin";
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("userRole", data.role || "user");
+          localStorage.setItem("userEmail", email);
+          showToast("Login successful! Redirecting...");
+
+          setTimeout(() => {
+            if (data.redirect) {
+              // If backend supplies a specific routing string, use it. If it references AdminDashboard.html, replace it.
+              window.location.href = data.redirect.replace("AdminDashboard.html", "admin.html");
+            } else {
+              window.location.href = isAdmin ? "admin.html" : "home.html";
+            }
+          }, 500);
+        } catch (error) {
+          console.error("Server connection issue:", error);
+          
+          // Sandbox local detection checking for "admin" phrase string
+          const isTestingAdmin = email.toLowerCase().includes("admin");
+          
+          showToast("📡 Server offline. Loading local sandbox session...", false);
+          
+          localStorage.setItem("isLoggedIn", "true");
+          localStorage.setItem("userRole", isTestingAdmin ? "admin" : "user");
+          localStorage.setItem("userEmail", email);
+
+          if (!isTestingAdmin) {
+            localStorage.setItem("profileName", "kaka yangchen");
+            localStorage.setItem("profileBio", "yo yo ya ya");
+          } else {
+            localStorage.setItem("profileName", "System Administrator");
+            localStorage.setItem("profileBio", "Library Control Dashboard Mode");
+          }
+
+          setTimeout(() => {
+            // Correctly routes to your actual project file: admin.html
+            window.location.href = isTestingAdmin ? "admin.html" : "home.html";
+          }, 1500);
+        }
+      }
+
+      window.handleEmailLogin = login;
+
+      checkbox.addEventListener("change", () => {
+        document.body.classList.toggle("dark-mode");
+
+        if (document.body.classList.contains("dark-mode")) {
+          localStorage.setItem("theme", "dark");
+        } else {
+          localStorage.setItem("theme", "light");
+        }
+      });
+
+      // Enter key keypress event triggers
+      document
+        .getElementById("email")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") login();
+        });
+
+      document
+        .getElementById("password")
+        .addEventListener("keypress", function (e) {
+          if (e.key === "Enter") login();
+        });
+    </script>
+  </body>
+</html>
