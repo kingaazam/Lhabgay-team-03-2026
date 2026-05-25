@@ -3,26 +3,33 @@ package database
 import (
 	"database/sql"
 	"log"
+	"os" // <-- 1. Added this to read environment variables
 
 	_ "github.com/lib/pq"
 )
 
-// DB is the shared PostgreSQL connection used by controllers and models.
 var DB *sql.DB
 
-// ConnectDB opens and verifies the PostgreSQL database connection.
 func ConnectDB() {
-	connStr := "host=host.docker.internal user=postgres password=postgres dbname=lhabgay_db sslmode=disable"
+	// 2. Check if Render gave us a cloud database URL
+	connStr := os.Getenv("DATABASE_URL")
 
-	db, err := sql.Open("postgres", connStr)
+	// 3. If there is no cloud database (meaning you are running it on your own PC),
+	//    fallback to your local login string.
+	if connStr == "" {
+		connStr = "postgres://postgres:12345@host.docker.internal:5432/bookdb?sslmode=disable"
+	}
+
+	var err error
+	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("Database connection error: ", err)
+		log.Fatalf("Database connection error: %v", err)
 	}
 
-	if err := db.Ping(); err != nil {
-		log.Fatal("Database ping error: ", err)
+	err = DB.Ping()
+	if err != nil {
+		log.Fatalf("Database ping error: %v", err)
 	}
 
-	DB = db
-	log.Println("Database connected successfully")
+	log.Println("Successfully connected to the database!")
 }
