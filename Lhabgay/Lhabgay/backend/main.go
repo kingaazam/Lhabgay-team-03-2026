@@ -17,19 +17,20 @@ func main() {
 	router := mux.NewRouter()
 	routes.RegisterRoutes(router)
 
+	// 1. Serve the explicit Login.html page when users visit the root URL "/"
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "Login.html")
+		http.ServeFile(w, r, "../../Login.html")
 	}).Methods(http.MethodGet)
 
-	// Frontend HTML files and image/book folders live in the project root.
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
+	// 2. Safely serve all other static asset files (HTML, CSS, JS, Images) from the parent directory
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../../"))))
 
-	// 2. Dynamic Port Handling for Render
+	// 3. Dynamic Port Handling for Render
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080" // Fallback to 8080 on your local machine
 	}
 
 	log.Printf("Server running on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, router)) // <-- 3. Uses Render's port
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
