@@ -105,7 +105,10 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/admin.html", http.StatusSeeOther)
+	// Send a clear JSON response back to the client instead of a silent redirect
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"success": true, "message": "Book saved successfully!"}`))
 }
 
 func GetBooks(w http.ResponseWriter, r *http.Request) {
