@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"Lhabgay/backend/database"
-	"Lhabgay/backend/models"
-	"Lhabgay/backend/utils"
+	"backend/database"
+	"backend/models"
+	"backend/utils"
 
 	"github.com/gorilla/mux"
 )

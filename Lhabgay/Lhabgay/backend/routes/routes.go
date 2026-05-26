@@ -3,8 +3,8 @@ package routes
 import (
 	"net/http"
 
-	"Lhabgay/backend/controllers"
-	"Lhabgay/backend/middleware"
+	"backend/controllers"
+	"backend/middleware"
 
 	"github.com/gorilla/mux"
 )

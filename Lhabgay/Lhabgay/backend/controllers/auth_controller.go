@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"Lhabgay/backend/database"
-	"Lhabgay/backend/utils"
+	"backend/database"
+	"backend/utils"
 
 	"github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"

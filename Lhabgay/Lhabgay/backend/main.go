@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	"Lhabgay/backend/database"
-	"Lhabgay/backend/routes"
+	"backend/database"
+	"backend/routes"
 
 	"github.com/gorilla/mux"
 )
@@ -17,19 +17,18 @@ func main() {
 	router := mux.NewRouter()
 	routes.RegisterRoutes(router)
 
-	// Explicitly serve Login.html at the root URL
+	// Explicitly serve Login.html from the parent project root folder
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Try serving from current directory
-		if _, err := os.Stat("Login.html"); err == nil {
-			http.ServeFile(w, r, "Login.html")
+		if _, err := os.Stat("../Login.html"); err == nil {
+			http.ServeFile(w, r, "../Login.html")
 			return
 		}
-		// Fallback check if it sits one level up from backend folder locally
-		http.ServeFile(w, r, "../Login.html")
+		// Fallback container context path
+		http.ServeFile(w, r, "Login.html")
 	}).Methods(http.MethodGet)
 
-	// Serve all other frontend static files (.html, .css, .js, images)
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
+	// Serve static UI assets (.html, .css, .js) from the parent directory root
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("../")))
 
 	port := os.Getenv("PORT")
 	if port == "" {
