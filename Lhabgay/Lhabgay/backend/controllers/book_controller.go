@@ -39,10 +39,19 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 	category := r.FormValue("category")
 	description := r.FormValue("description")
 
-	file, handler, err := r.FormFile("pdf")
+	// Try fetching using 'book_file' first
+	file, handler, err := r.FormFile("book_file")
 	if err != nil {
-		utils.Error(w, http.StatusBadRequest, "PDF file is required")
-		return
+		// Fallback: try fetching using 'bookFile' if the first one fails
+		file, handler, err = r.FormFile("bookFile")
+		if err != nil {
+			// Ultimate fallback: try generic 'file'
+			file, handler, err = r.FormFile("file")
+			if err != nil {
+				http.Error(w, `{"error": "PDF file is required"}`, http.StatusBadRequest)
+				return
+			}
+		}
 	}
 	defer file.Close()
 
