@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"log"
-	"os" // <-- 1. Added this to read environment variables
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -11,11 +11,8 @@ import (
 var DB *sql.DB
 
 func ConnectDB() {
-	// 2. Check if Render gave us a cloud database URL
 	connStr := os.Getenv("DATABASE_URL")
 
-	// 3. If there is no cloud database (meaning you are running it on your own PC),
-	//    fallback to your local login string.
 	if connStr == "" {
 		connStr = "postgres://postgres:12345@host.docker.internal:5432/bookdb?sslmode=disable"
 	}
@@ -32,4 +29,13 @@ func ConnectDB() {
 	}
 
 	log.Println("Successfully connected to the database!")
+
+	// This block runs every time the server starts and safely creates the missing columns
+	_, err = DB.Exec(`
+		ALTER TABLE books ADD COLUMN IF NOT EXISTS cover_image TEXT;
+		ALTER TABLE books ADD COLUMN IF NOT EXISTS book_file_path TEXT;
+	`)
+	if err != nil {
+		log.Println("Database setup auto-check:", err)
+	}
 }
