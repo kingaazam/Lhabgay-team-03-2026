@@ -568,20 +568,21 @@
         let currentCategory = "all";
 
         function normalizeBook(book) {
-            const category = (book.category || '').toLowerCase();
-            return {
-                id: book.id,
-                title: book.title,
-                author: book.author,
-                category: category,
-                rating: book.rating || 5,
-                year: book.created_at ? new Date(book.created_at).getFullYear() : '',
-                pages: book.pages || '',
-                description: book.description || '',
-                image: book.cover_image_path ? `/${book.cover_image_path}` : book.image || 'https://via.placeholder.com/300x450?text=No+Cover',
-                book_file_path: book.book_file_path ? (book.book_file_path.startsWith('/') ? book.book_file_path : `/${book.book_file_path}`) : ''
-            };
-        }
+    const category = (book.category || '').toLowerCase();
+    return {
+        id: book.id,
+        title: book.title,
+        author: book.author,
+        category: category,
+        rating: book.rating || 5,
+        year: book.created_at ? new Date(book.created_at).getFullYear() : '',
+        pages: book.pages || '',
+        description: book.description || '',
+        // CHANGE THIS LINE BELOW: Use book.cover_image instead of cover_image_path
+        image: book.cover_image ? `/book/${book.cover_image}` : book.image || 'https://via.placeholder.com/300x450?text=No+Cover',
+        book_file_path: book.book_file_path ? (book.book_file_path.startsWith('/') ? book.book_file_path : `/${book.book_file_path}`) : ''
+    };
+}
 
         async function loadBooksFromServer() {
             try {

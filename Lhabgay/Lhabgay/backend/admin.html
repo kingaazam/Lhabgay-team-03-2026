@@ -288,21 +288,21 @@
 
     <script>
       function normalizeBook(book) {
-        return {
-          id: book.id,
-          title: book.title || "Untitled",
-          author: book.author || "Unknown Author",
-          isbn: book.isbn || "N/A",
-          category: book.category || "General",
-          dateAdded: book.created_at
-            ? new Date(book.created_at).toLocaleDateString()
-            : book.dateAdded || "Recent",
-          image: book.cover_image_path
-            ? `/${book.cover_image_path}`
-            : book.image || "https://via.placeholder.com/120x170?text=No+Cover",
-        };
-      }
-
+  return {
+    id: book.id,
+    title: book.title || "Untitled",
+    author: book.author || "Unknown Author",
+    isbn: book.isbn || "N/A",
+    category: book.category || "General",
+    dateAdded: book.created_at
+      ? new Date(book.created_at).toLocaleDateString()
+      : book.dateAdded || "Recent",
+    // CHANGE THIS LINE BELOW: Use book.cover_image instead of cover_image_path
+    image: book.cover_image
+      ? `/book/${book.cover_image}`
+      : book.image || "https://via.placeholder.com/120x170?text=No+Cover",
+  };
+}
       async function loadBooks() {
         const booksTableBody = document.getElementById("booksTableBody");
         const totalBooksCount = document.getElementById("totalBooksCount");
