@@ -30,12 +30,12 @@ func ConnectDB() {
 
 	log.Println("Successfully connected to the database!")
 
-	// This block runs every time the server starts and safely creates the missing columns
+	// FORCE-FIX THE DATABASE COLUMNS LIVE ON LAUNCH
 	_, err = DB.Exec(`
 		ALTER TABLE books ADD COLUMN IF NOT EXISTS cover_image TEXT;
 		ALTER TABLE books ADD COLUMN IF NOT EXISTS book_file_path TEXT;
 	`)
 	if err != nil {
-		log.Println("Database setup auto-check:", err)
+		log.Println("Database setup auto-check warning:", err)
 	}
 }
