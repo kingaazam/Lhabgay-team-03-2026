@@ -39,13 +39,11 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 	category := r.FormValue("category")
 	description := r.FormValue("description")
 
-	// Try fetching using 'book_file' first
+	// 1. Get the PDF Book File cleanly
 	file, handler, err := r.FormFile("book_file")
 	if err != nil {
-		// Fallback: try fetching using 'bookFile' if the first one fails
 		file, handler, err = r.FormFile("bookFile")
 		if err != nil {
-			// Ultimate fallback: try generic 'file'
 			file, handler, err = r.FormFile("file")
 			if err != nil {
 				http.Error(w, `{"error": "PDF file is required"}`, http.StatusBadRequest)
@@ -55,12 +53,25 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	// 2. Get the Cover Image File cleanly
+	coverFile, coverHandler, err := r.FormFile("cover_image")
+	if err != nil {
+		coverFile, coverHandler, err = r.FormFile("coverImage")
+		if err != nil {
+			// If cover image is optional, you can remove this error block
+			http.Error(w, `{"error": "Cover image is required"}`, http.StatusBadRequest)
+			return
+		}
+	}
+	defer coverFile.Close()
+
 	uploadDir := "../book"
 	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
 		utils.Error(w, http.StatusInternalServerError, "Failed to create upload directory")
 		return
 	}
 
+	// Save Book PDF to disk
 	filePath := filepath.Join(uploadDir, handler.Filename)
 	dst, err := os.Create(filePath)
 	if err != nil {
@@ -68,16 +79,27 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer dst.Close()
-
-	if _, err := io.Copy(dst, file); err != nil {
+	if _, err = io.Copy(dst, file); err != nil {
 		utils.Error(w, http.StatusInternalServerError, "Failed to save file content")
 		return
 	}
 
-	_, err = database.DB.Exec(
-		"INSERT INTO books (title, author, category, description, book_file_path) VALUES ($1, $2, $3, $4, $5)",
-		title, author, category, description, handler.Filename,
-	)
+	// Save Cover Image to disk
+	coverPath := filepath.Join(uploadDir, coverHandler.Filename)
+	dstCover, err := os.Create(coverPath)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Failed to save cover image")
+		return
+	}
+	defer dstCover.Close()
+	if _, err = io.Copy(dstCover, coverFile); err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Failed to save cover content")
+		return
+	}
+
+	// 3. Updated Database Execution (Includes both path fields)
+	query := "INSERT INTO books (title, author, category, description, book_file_path, cover_image) VALUES ($1, $2, $3, $4, $5, $6)"
+	_, err = database.DB.Exec(query, title, author, category, description, handler.Filename, coverHandler.Filename)
 	if err != nil {
 		utils.Error(w, http.StatusInternalServerError, "Failed to save book to database")
 		return
