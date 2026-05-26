@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
-	"os" // <-- 1. Added this so we can read environment variables
+	"os"
 
-	"lhabgay/backend/database"
-	"lhabgay/backend/routes"
+	"Lhabgay/backend/database"
+	"Lhabgay/backend/routes"
 
 	"github.com/gorilla/mux"
 )
@@ -17,20 +17,23 @@ func main() {
 	router := mux.NewRouter()
 	routes.RegisterRoutes(router)
 
-	// 1. Look for Login.html in the current project directory context
+	// Explicitly serve Login.html at the root URL
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "Login.html") // <-- Removed the "../../"
+		// Try serving from current directory
+		if _, err := os.Stat("Login.html"); err == nil {
+			http.ServeFile(w, r, "Login.html")
+			return
+		}
+		// Fallback check if it sits one level up from backend folder locally
+		http.ServeFile(w, r, "../Login.html")
 	}).Methods(http.MethodGet)
 
-	// 2. Serve static asset files from the current folder context
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(".")))) // <-- Changed to "."
-	// 2. Safely serve all other static asset files (HTML, CSS, JS, Images) from the parent directory
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("../../"))))
+	// Serve all other frontend static files (.html, .css, .js, images)
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir(".")))
 
-	// 3. Dynamic Port Handling for Render
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // Fallback to 8080 on your local machine
+		port = "8080"
 	}
 
 	log.Printf("Server running on port %s", port)

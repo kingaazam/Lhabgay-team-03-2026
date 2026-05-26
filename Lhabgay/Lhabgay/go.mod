@@ -1,4 +1,4 @@
-module lhabgay
+module Lhabgay
 
 go 1.25.1
 

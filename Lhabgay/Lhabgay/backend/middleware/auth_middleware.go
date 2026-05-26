@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"lhabgay/backend/utils"
+	"Lhabgay/backend/utils"
 )
 
 // RequireAdmin allows access only when the session_role cookie is admin.

@@ -3,13 +3,12 @@ package routes
 import (
 	"net/http"
 
-	"lhabgay/backend/controllers"
-	"lhabgay/backend/middleware"
+	"Lhabgay/backend/controllers"
+	"Lhabgay/backend/middleware"
 
 	"github.com/gorilla/mux"
 )
 
-// RegisterRoutes attaches all API endpoints to the router.
 func RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/auth/login", controllers.Login).Methods(http.MethodPost)
 	router.HandleFunc("/user/signup", controllers.Signup).Methods(http.MethodPost)
@@ -21,6 +20,5 @@ func RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/books", controllers.GetBooks).Methods(http.MethodGet)
 	router.HandleFunc("/books/{id:[0-9]+}", controllers.GetBook).Methods(http.MethodGet)
 
-	// File serving endpoints - must come before catch-all PathPrefix
 	router.HandleFunc("/files/{filepath:.+}", controllers.ServeFile).Methods(http.MethodGet)
 }

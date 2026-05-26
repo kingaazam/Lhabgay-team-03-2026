@@ -2,95 +2,95 @@ package controllers
 
 import (
 	"database/sql"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
-	"time"
 
-	"lhabgay/backend/database"
-	"lhabgay/backend/models"
-	"lhabgay/backend/utils"
+	"Lhabgay/backend/database"
+	"Lhabgay/backend/models"
+	"Lhabgay/backend/utils"
 
 	"github.com/gorilla/mux"
 )
 
-// UploadBook saves uploaded files and creates a books table record.
+func ServeFile(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filename := vars["filepath"]
+	filePath := filepath.Join("../book", filename)
+
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		http.Error(w, "File not found", http.StatusNotFound)
+		return
+	}
+	http.ServeFile(w, r, filePath)
+}
+
 func UploadBook(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(20 << 20); err != nil {
-		utils.Error(w, http.StatusBadRequest, "could not read upload form")
-		return
-	}
-
-	title := strings.TrimSpace(r.FormValue("title"))
-	author := strings.TrimSpace(r.FormValue("author"))
-	description := strings.TrimSpace(r.FormValue("description"))
-	category := strings.TrimSpace(r.FormValue("category"))
-	if title == "" || author == "" || description == "" || category == "" {
-		utils.Error(w, http.StatusBadRequest, "title, author, description and category are required")
-		return
-	}
-
-	coverPath, err := saveUploadedFile(r, "cover_image", "image")
+	err := r.ParseMultipartForm(10 << 20) // 10MB max
 	if err != nil {
-		utils.Error(w, http.StatusBadRequest, err.Error())
+		utils.Error(w, http.StatusBadRequest, "Invalid form data")
 		return
 	}
 
-	bookPath, err := saveUploadedFile(r, "book_file", "book")
+	title := r.FormValue("title")
+	author := r.FormValue("author")
+	category := r.FormValue("category")
+	description := r.FormValue("description")
+
+	file, handler, err := r.FormFile("pdf")
 	if err != nil {
-		utils.Error(w, http.StatusBadRequest, err.Error())
+		utils.Error(w, http.StatusBadRequest, "PDF file is required")
+		return
+	}
+	defer file.Close()
+
+	uploadDir := "../book"
+	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Failed to create upload directory")
+		return
+	}
+
+	filePath := filepath.Join(uploadDir, handler.Filename)
+	dst, err := os.Create(filePath)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Failed to save file")
+		return
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, file); err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Failed to save file content")
 		return
 	}
 
 	_, err = database.DB.Exec(
-		`INSERT INTO books (title, author, description, category, cover_image_path, book_file_path)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
-		title,
-		author,
-		description,
-		category,
-		coverPath,
-		bookPath,
+		"INSERT INTO books (title, author, category, description, book_file_path) VALUES ($1, $2, $3, $4, $5)",
+		title, author, category, description, handler.Filename,
 	)
 	if err != nil {
-		utils.Error(w, http.StatusInternalServerError, "could not save book")
+		utils.Error(w, http.StatusInternalServerError, "Failed to save book to database")
 		return
 	}
 
-	utils.JSON(w, http.StatusOK, map[string]string{"message": "book uploaded successfully"})
+	http.Redirect(w, r, "/admin.html", http.StatusSeeOther)
 }
 
-// GetBooks returns all books from newest to oldest.
 func GetBooks(w http.ResponseWriter, r *http.Request) {
-	rows, err := database.DB.Query(
-		`SELECT id, title, author, description, category, cover_image_path, book_file_path, created_at
-		 FROM books
-		 ORDER BY created_at DESC, id DESC`,
-	)
+	rows, err := database.DB.Query("SELECT id, title, author, category, description, book_file_path FROM books")
 	if err != nil {
-		utils.Error(w, http.StatusInternalServerError, "could not load books")
+		utils.Error(w, http.StatusInternalServerError, "Failed to fetch books")
 		return
 	}
 	defer rows.Close()
 
-	books := make([]models.Book, 0)
+	var books []models.Book
 	for rows.Next() {
 		var book models.Book
-		if err := rows.Scan(
-			&book.ID,
-			&book.Title,
-			&book.Author,
-			&book.Description,
-			&book.Category,
-			&book.CoverImagePath,
-			&book.BookFilePath,
-			&book.CreatedAt,
-		); err != nil {
-			utils.Error(w, http.StatusInternalServerError, "could not read books")
+		err := rows.Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Description, &book.BookFilePath)
+		if err != nil {
+			utils.Error(w, http.StatusInternalServerError, "Error scanning books")
 			return
 		}
 		books = append(books, book)
@@ -99,152 +99,52 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 	utils.JSON(w, http.StatusOK, books)
 }
 
-// GetBook returns one book by URL id.
 func GetBook(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		utils.Error(w, http.StatusBadRequest, "invalid book id")
+		utils.Error(w, http.StatusBadRequest, "Invalid book ID")
 		return
 	}
 
 	var book models.Book
-	err = database.DB.QueryRow(
-		`SELECT id, title, author, description, category, cover_image_path, book_file_path, created_at
-		 FROM books
-		 WHERE id = $1`,
-		id,
-	).Scan(
-		&book.ID,
-		&book.Title,
-		&book.Author,
-		&book.Description,
-		&book.Category,
-		&book.CoverImagePath,
-		&book.BookFilePath,
-		&book.CreatedAt,
-	)
+	err = database.DB.QueryRow("SELECT id, title, author, category, description, book_file_path FROM books WHERE id = $1", id).
+		Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Description, &book.BookFilePath)
+
 	if err == sql.ErrNoRows {
-		utils.Error(w, http.StatusNotFound, "book not found")
+		utils.Error(w, http.StatusNotFound, "Book not found")
 		return
-	}
-	if err != nil {
-		utils.Error(w, http.StatusInternalServerError, "could not load book")
+	} else if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Database error")
 		return
 	}
 
 	utils.JSON(w, http.StatusOK, book)
 }
 
-// DeleteBook removes one book record and its uploaded files. Admin middleware protects this route.
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(mux.Vars(r)["id"])
-	if err != nil {
-		utils.Error(w, http.StatusBadRequest, "invalid book id")
-		return
-	}
-
-	var coverPath, bookPath string
-	err = database.DB.QueryRow(
-		"SELECT cover_image_path, book_file_path FROM books WHERE id = $1",
-		id,
-	).Scan(&coverPath, &bookPath)
-	if err == sql.ErrNoRows {
-		utils.Error(w, http.StatusNotFound, "book not found")
-		return
-	}
-	if err != nil {
-		utils.Error(w, http.StatusInternalServerError, "could not find book")
-		return
-	}
-
-	result, err := database.DB.Exec("DELETE FROM books WHERE id = $1", id)
-	if err != nil {
-		utils.Error(w, http.StatusInternalServerError, "could not delete book")
-		return
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil || rowsAffected == 0 {
-		utils.Error(w, http.StatusNotFound, "book not found")
-		return
-	}
-
-	removeUploadedFile(coverPath)
-	removeUploadedFile(bookPath)
-
-	utils.JSON(w, http.StatusOK, map[string]string{"message": "book deleted successfully"})
-}
-
-func saveUploadedFile(r *http.Request, formName, folder string) (string, error) {
-	file, header, err := r.FormFile(formName)
-	if err != nil {
-		return "", fmt.Errorf("%s is required", formName)
-	}
-	defer file.Close()
-
-	if err := os.MkdirAll(folder, 0755); err != nil {
-		return "", fmt.Errorf("could not create %s folder", folder)
-	}
-
-	ext := strings.ToLower(filepath.Ext(header.Filename))
-	base := strings.TrimSuffix(filepath.Base(header.Filename), ext)
-	base = safeFileName(base)
-	if base == "" {
-		base = "upload"
-	}
-
-	fileName := fmt.Sprintf("%d_%s%s", time.Now().UnixNano(), base, ext)
-	relativePath := filepath.ToSlash(filepath.Join(folder, fileName))
-	destination, err := os.Create(relativePath)
-	if err != nil {
-		return "", fmt.Errorf("could not save %s", formName)
-	}
-	defer destination.Close()
-
-	if _, err := io.Copy(destination, file); err != nil {
-		return "", fmt.Errorf("could not write %s", formName)
-	}
-
-	return relativePath, nil
-}
-
-func safeFileName(name string) string {
-	var builder strings.Builder
-	for _, r := range strings.ToLower(name) {
-		switch {
-		case r >= 'a' && r <= 'z':
-			builder.WriteRune(r)
-		case r >= '0' && r <= '9':
-			builder.WriteRune(r)
-		case r == '-' || r == '_':
-			builder.WriteRune(r)
-		case r == ' ':
-			builder.WriteRune('_')
-		}
-	}
-	return builder.String()
-}
-
-func removeUploadedFile(path string) {
-	path = filepath.Clean(path)
-	if strings.HasPrefix(path, "image"+string(os.PathSeparator)) || strings.HasPrefix(path, "book"+string(os.PathSeparator)) {
-		_ = os.Remove(path)
-	}
-}
-
-// ServeFile handles HTTP requests to serve uploaded static files (images, PDFs, etc.)
-func ServeFile(w http.ResponseWriter, r *http.Request) {
-	// Get the filepath variable from the mux URL router
 	vars := mux.Vars(r)
-	filePath := vars["filepath"]
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		utils.Error(w, http.StatusBadRequest, "Invalid book ID")
+		return
+	}
 
-	// Define the base directory where your files are stored locally
-	// Change "./uploads" to "./image" or whichever folder your backend uses to save uploads
-	baseDir := "./image"
+	var filename string
+	err = database.DB.QueryRow("SELECT book_file_path FROM books WHERE id = $1", id).Scan(&filename)
+	if err == sql.ErrNoRows {
+		utils.Error(w, http.StatusNotFound, "Book not found")
+		return
+	}
 
-	// Securely join paths to prevent directory traversal attacks (e.g., ../../etc/passwd)
-	finalPath := filepath.Join(baseDir, filePath)
+	filePath := filepath.Join("../book", filename)
+	_ = os.Remove(filePath)
 
-	// Serve the static file
-	http.ServeFile(w, r, finalPath)
+	_, err = database.DB.Exec("DELETE FROM books WHERE id = $1", id)
+	if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Failed to delete book from database")
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, map[string]string{"message": "Book deleted successfully"})
 }
