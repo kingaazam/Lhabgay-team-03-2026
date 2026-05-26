@@ -135,28 +135,28 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 	utils.JSON(w, http.StatusOK, books)
 }
 
-func GetBooks(w http.ResponseWriter, r *http.Request) {
-	// 1. ADD cover_image right here inside the query string:
-	rows, err := database.DB.Query("SELECT id, title, author, category, description, book_file_path, cover_image FROM books")
+func GetBook(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		utils.Error(w, http.StatusInternalServerError, "Failed to fetch books")
+		utils.Error(w, http.StatusBadRequest, "Invalid book ID")
 		return
 	}
-	defer rows.Close()
 
-	var books []models.Book
-	for rows.Next() {
-		var book models.Book
-		// 2. ADD &book.CoverImage (or whatever the field is named in your models.Book struct) at the end:
-		err := rows.Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Description, &book.BookFilePath, &book.CoverImage)
-		if err != nil {
-			utils.Error(w, http.StatusInternalServerError, "Error scanning books")
-			return
-		}
-		books = append(books, book)
+	var book models.Book
+	// Notice ", cover_image" is added inside the double quotes right before WHERE
+	err = database.DB.QueryRow("SELECT id, title, author, category, description, book_file_path, cover_image FROM books WHERE id = $1", id).
+		Scan(&book.ID, &book.Title, &book.Author, &book.Category, &book.Description, &book.BookFilePath, &book.CoverImage)
+
+	if err == sql.ErrNoRows {
+		utils.Error(w, http.StatusNotFound, "Book not found")
+		return
+	} else if err != nil {
+		utils.Error(w, http.StatusInternalServerError, "Database error")
+		return
 	}
 
-	utils.JSON(w, http.StatusOK, books)
+	utils.JSON(w, http.StatusOK, book)
 }
 
 func DeleteBook(w http.ResponseWriter, r *http.Request) {
