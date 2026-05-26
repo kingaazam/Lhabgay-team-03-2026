@@ -3,6 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -46,7 +47,7 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			file, handler, err = r.FormFile("file")
 			if err != nil {
-				http.Error(w, `{"error": "PDF file is required"}`, http.StatusBadRequest)
+				utils.Error(w, http.StatusBadRequest, "PDF file is required")
 				return
 			}
 		}
@@ -58,8 +59,7 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		coverFile, coverHandler, err = r.FormFile("coverImage")
 		if err != nil {
-			// If cover image is optional, you can remove this error block
-			http.Error(w, `{"error": "Cover image is required"}`, http.StatusBadRequest)
+			utils.Error(w, http.StatusBadRequest, "Cover image is required")
 			return
 		}
 	}
@@ -97,15 +97,17 @@ func UploadBook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. Updated Database Execution (Includes both path fields)
+	// 3. Database Execution - Matches our auto-updating schema perfectly
 	query := "INSERT INTO books (title, author, category, description, book_file_path, cover_image) VALUES ($1, $2, $3, $4, $5, $6)"
 	_, err = database.DB.Exec(query, title, author, category, description, handler.Filename, coverHandler.Filename)
 	if err != nil {
+		// This prints the exact database error to your Render logs so it's transparent
+		log.Println("DATABASE EXECUTION ERROR:", err)
 		utils.Error(w, http.StatusInternalServerError, "Failed to save book to database")
 		return
 	}
 
-	// Send a clear JSON response back to the client instead of a silent redirect
+	// Send an explicit JSON success response back to the client
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"success": true, "message": "Book saved successfully!"}`))
